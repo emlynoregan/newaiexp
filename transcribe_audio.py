@@ -7,7 +7,7 @@ import urllib.parse
 import argparse
 import os
 
-def transcribe_video(video_bytes, engine):
+def transcribe_audio(audio_bytes, engine):
   pipeline_dict = {
       "input_type": "auto-detect",
       "steps": [
@@ -19,7 +19,7 @@ def transcribe_video(video_bytes, engine):
               }
           }
       ], 
-      "content_type": "audio/mp3"
+      # "content_type": "audio/mp3"
   }
 
   pipeline_urlencode = urllib.parse.quote(json.dumps(pipeline_dict))
@@ -32,7 +32,7 @@ def transcribe_video(video_bytes, engine):
   }
 
   print(f"Sending request to {url}...")
-  r = requests.post(url, video_bytes, headers=headers)
+  r = requests.post(url, audio_bytes, headers=headers)
 
   if r.status_code < 200 or r.status_code >= 300:
       print(f"Error ({r.status_code}): {r.text}")
@@ -92,14 +92,14 @@ def parse_transcription(transcription):
   return utterances
 
 def main():
-    # usage: python3 transcribe_video.py <YOUR-FILE-PATH> [<ENGINE>] [<OUTPUT-FILE>]
+    # usage: python3 transcribe_audio.py <YOUR-FILE-PATH> [<ENGINE>] [<OUTPUT-FILE>]
     # default ENGINE is "default"
     # default OUTPUT-FILE is "./working/transcription_using_<ENGINE>_for_<YOUR-FILE-PATH>.json"
 
     # first get all the command line arguments
-    parser = argparse.ArgumentParser(description='Transcribe a video file.')
+    parser = argparse.ArgumentParser(description='Transcribe an audio file (or audio in a video file).')
 
-    parser.add_argument('filename', type=str, help='the path to the video file')
+    parser.add_argument('filename', type=str, help='the path to the audio or video file')
     parser.add_argument('--engine', type=str, default="default", help='the engine to use for transcription')
     parser.add_argument('--output_file', type=str, default=None, help='the path to the output file')
 
@@ -121,9 +121,9 @@ def main():
     output_file = args.output_file or default_output_file
 
     with open(filename, "rb") as f:
-      video_bytes = f.read()
+      audio_bytes = f.read()
 
-    result = transcribe_video(video_bytes, engine)
+    result = transcribe_audio(audio_bytes, engine)
 
     if result is None:
       print("Error: no result")

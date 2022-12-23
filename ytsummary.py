@@ -2,7 +2,7 @@
 
 import setcreds
 from youtube_transcript_api import YouTubeTranscriptApi
-from utils import get_chunks_from_transcript, transcribe_video_transcript_chunks, set_diagnostics
+from utils import get_chunks_from_transcript, summarize_audio_transcript_chunks, set_diagnostics
 import argparse
 import os
 
@@ -59,7 +59,7 @@ def main():
     transcript = YouTubeTranscriptApi.get_transcript(video_id)
     chunks = get_chunks_from_transcript(transcript, chunk_len_mins)
 
-    result = transcribe_video_transcript_chunks(chunks, prompt_header, include_mentions, chunk_len_mins)
+    result = summarize_audio_transcript_chunks(chunks, prompt_header, include_mentions, chunk_len_mins)
 
     with open(output_file, "w") as f:
         f.write(result)

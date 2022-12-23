@@ -1,5 +1,5 @@
-# transcribe_video.py
-## transcribes a video on your local filesystem by sending it to https://oneai.com
+# transcribe_audio.py
+## transcribes a audio on your local filesystem by sending it to https://oneai.com
 
 You will require an api key for One API. Sign up for one [here](https://oneai.com/). Note that this will cost money, use it at your own risk.
 
@@ -19,10 +19,10 @@ Linux / Mac:
 
 Next, copy the file 'setcreds template.py' to 'setcreds.py' and fill in your OneAI API key.
 
-Now you can transcribe a video by running:
+Now you can transcribe an audio or video file by running:
 
 ```
-python transcribe_video.py <video file> ["default"|"whisper"] [<outfile name>]
+python transcribe_audio.py <audio or video file> ["default"|"whisper"] [<outfile name>]
 ```
 
 "default" is the default engine, "whisper" is openai's whisper engine.
