@@ -4,7 +4,7 @@ import setcreds
 import json
 import argparse
 import os
-from utils import transcribe_video_transcript_chunks, get_chunks_from_transcript
+from utils import summarize_audio_transcript_chunks, get_chunks_from_transcript
 
 diagnostics = 0
 include_mentions = 0
@@ -52,7 +52,7 @@ def main():
     # chunks = get_chunks(transcript_file_name)
     chunks = get_chunks_from_transcript(transcript, chunk_len_mins)
 
-    result = transcribe_video_transcript_chunks(chunks, prompt_header, include_mentions, chunk_len_mins)
+    result = summarize_audio_transcript_chunks(chunks, prompt_header, include_mentions, chunk_len_mins)
 
     with open(output_file, "w") as f:
         f.write(result)

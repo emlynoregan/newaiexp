@@ -7,3 +7,6 @@ openai.api_key = '<YOUR-API-KEY>'
 
 # OneAI API Key. Link: https://oneai.com/
 oneai_api_key = '<ONEAI-API-KEY>' 
+
+# Scraping Robot API Key. Link: https://scrapingrobot.com/
+scraping_api_key = ''

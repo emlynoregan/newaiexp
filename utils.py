@@ -244,7 +244,7 @@ def summarize_mentions(mentioneds, prompt_header):
 
     return msg
 
-def transcribe_video_transcript_chunks(chunks, prompt_header, include_mentions, chunk_len_mins):
+def summarize_audio_transcript_chunks(chunks, prompt_header, include_mentions, chunk_len_mins):
     result = ""
 
     if len(chunks) == 0:
@@ -300,3 +300,93 @@ def transcribe_video_transcript_chunks(chunks, prompt_header, include_mentions, 
         result += output
 
     return result
+
+def summarize_single_text_chunk(index, chunk, prompt_header):
+    prompt = f"""The following is a section of a text document. It is section #{index+1}:
+
+{chunk}
+
+{prompt_header}Summarize this section."""
+
+    if diagnostics:
+        # print each line of the prompt with a leading # so we can see it in the output
+        for line in prompt.split('\n'):
+            print(f"# {line}")
+
+    completion = openai.Completion.create(
+        engine="text-davinci-003", 
+        max_tokens=500, 
+        temperature=0.2,
+        prompt=prompt,
+        frequency_penalty=0
+    )
+
+    msg = completion.choices[0].text
+
+    if diagnostics:
+        print(f"# Response: {msg}")
+
+    return msg
+
+def summarize_the_text_summaries(summaries, prompt_header):
+    summaries_str = ""
+    for index, summary in enumerate(summaries):
+        summaries_str += f"Summary of section {index+1}:\n{summary}\n\n"
+
+    prompt = f"""A text document, possibly from a web page, is broken into sections. Each section is summarized. The summaries are:"
+
+{summaries_str}
+
+{prompt_header}Summarize the summaries."""
+
+    if diagnostics:
+        # print each line of the prompt with a leading # so we can see it in the output
+        for line in prompt.split('\n'):
+            print(f"# {line}")
+
+    completion = openai.Completion.create(
+        engine="text-davinci-003", 
+        max_tokens=500, 
+        temperature=0.2,
+        prompt=prompt,
+        frequency_penalty=0
+    )
+
+    msg = completion.choices[0].text
+
+    if diagnostics:
+        print(f"# Response: {msg}")
+
+    return msg
+
+def summarize_text_chunks(chunks, prompt_header):
+    result = ""
+
+    if len(chunks) == 0:
+        output = "No chunks found"
+        print(output)
+        result += output
+    elif len(chunks) == 1:
+        summary = summarize_single_text_chunk(0, chunks[0], prompt_header)
+        output = f"Summary: {summary}"
+        print(output)
+        result += output
+    else:
+        # Now we have the chunks, we can summarize each one
+        summaries = []
+        for index, chunk in enumerate(chunks):
+            summary = summarize_single_text_chunk(index, chunk, prompt_header)
+            summaries.append(summary)
+            output = f"\nSummary of chunk {index+1}:\n-----\n{summary.strip()}"
+            print(output)
+            result += f"{output}\n"
+
+        # Now we have the summaries, we can summarize the summaries
+        summary_of_summaries = summarize_the_text_summaries(summaries, prompt_header)
+
+        output = f"\nOverall summary\n-----\n{summary_of_summaries.strip()}"
+        print(output)
+        result += output
+    
+    return result
+

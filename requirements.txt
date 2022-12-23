@@ -1,3 +1,4 @@
 openai
 youtube_transcript_api
 requests
+bs4

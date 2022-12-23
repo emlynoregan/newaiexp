@@ -1,5 +1,5 @@
 # summarize_transcript.py
-## summarizes a video transcript file
+## summarizes an audio transcript file
 
 You will require an api key for Open API. Sign up for one [here](https://openai.com/api/). Note that this will cost money, use it at your own risk.
 
@@ -19,14 +19,14 @@ Linux / Mac:
 
 Next, copy the file 'setcreds template.py' to 'setcreds.py' and fill in your OpenAI API key.
 
-Now you can transcribe a video by running:
+Now you can summarize a transcript by running:
 
 Usage:
 ---
 ```
 python3 summarize_transcript.py <transcription_filename> [--outfile <output_filename>] [--prompt_header <promptheader_filename>] [--chunk_len_mins <int>] [--diagnostics]
 ```
-transcript_filename: the filename of the transcript to summarize. This should be a json file, as produced by transcribe_video.py
+transcript_filename: the filename of the transcript to summarize. This should be a json file, as produced by transcribe_audio.py
 
 prompt_header: a file containing extra instructions for text-davinci-003, inserted into summarization prompts. This is optional. You could include text like "Speaker 1 is Fred Bloggs" or "Do not include information about ads in the summary". The file can be multiple lines, not too long, and do include a few newlines at the end.
 
@@ -86,3 +86,4 @@ In this section of the transcript, Ira Glass and Michelle Dawson Haber discuss A
 Overall summary
 -----
 This transcript covers a variety of stories about the power of sound and technology to capture memories and moments that would otherwise be lost. It discusses the use of GPT-3, an artificial intelligence program, to explore grief, as well as the story of Gene, who visited the first full body MRI machine in Aberdeen, Scotland to commune with her father. It also covers the story of Jonah Furman and his father Boris, who has been sending emails to his family with the Family Average Location for the past eight years, and Alex Edelman's story of how his Orthodox Jewish parents celebrated Christmas with him and his brother AJ.
+```
