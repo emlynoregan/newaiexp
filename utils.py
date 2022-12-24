@@ -89,7 +89,10 @@ def get_chunks_from_transcript(transcript, chunk_length_mins=10.0):
             # convert the duration to seconds
             start = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0
 
-        current_timestamp_mins = start / 60.0
+        try:
+            current_timestamp_mins = start / 60.0
+        except:
+            pass # just use the previous timestamp
 
         # if the current timestamp is more than chunk_length_mins minutes after the start timestamp
         # then we have a chunk
