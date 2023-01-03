@@ -2,7 +2,7 @@
 
 import setcreds
 from youtube_transcript_api import YouTubeTranscriptApi
-from utils import get_chunks_from_transcript, summarize_audio_transcript_chunks, set_diagnostics, diagnostics
+from utils import set_diagnostics
 import argparse
 import os
 import json
@@ -217,33 +217,22 @@ creating an embedding for semantic search:
     return completion.choices[0].text
 
 def main():
-    # usage: python3 ytsummary.py <YOUR-FILE-PATH>  [--outfile <output_filename>] [--prompt_header <promptheader_filename>] [--chunk_len_mins <int>] [--diagnostics] [--mentions] [--save_transcript <transcript_filename>] [--embeddings-db <embeddings_db_filename>]
+    # usage: python3 ytqa.py <YOUR-FILE-PATH>  [--prompt_header <promptheader_filename>] [--diagnostics] [--embeddings-db <embeddings_db_filename>]
 
     # first get all the command line arguments
-    parser = argparse.ArgumentParser(description='Summarize a youtube video.')
+    parser = argparse.ArgumentParser(description='Q&A session about a youtube video.')
 
-    parser.add_argument('video_id_or_url', type=str, help='The video id or url of the video to summarize')
-    parser.add_argument('--outfile', type=str, help='The name of the file to write the summary to')
+    parser.add_argument('video_id_or_url', type=str, help='The video id or url of the video to talk about')
     parser.add_argument('--prompt_header', type=str, help='The name of the file to write the prompt header to')
-    parser.add_argument('--chunk_len_mins', type=int, help='The length of the chunks to summarize in minutes')
     parser.add_argument('--diagnostics', action='store_true', help='Print out the prompts and responses')
-    parser.add_argument('--mentions', action='store_true', help='Include people and entities mentioned in the video')
-    parser.add_argument('--save_transcript', type=str, help='The name of the file to write the transcript to')
     parser.add_argument('--embeddings-db', type=str, help='The name of the file to write the embeddings db to')
 
     args = parser.parse_args()
 
     video_id_or_url = args.video_id_or_url
     video_id = get_video_id_from_video_id_or_url(video_id_or_url)
-    outfile_name = args.outfile
-    transcript_outfile_name = args.save_transcript
   
     embeddings_db_name = args.embeddings_db
-
-    if not outfile_name:
-        default_output_file_path_elems = ["working", f"yt_transcript_{video_id}.txt"]
-
-        outfile_name = os.path.join(*default_output_file_path_elems)
 
     if not embeddings_db_name:
         default_embeddings_db_file_path_elems = ["working", f"yt_embeddings_db_{video_id}.json"]
@@ -251,7 +240,7 @@ def main():
         embeddings_db_name = os.path.join(*default_embeddings_db_file_path_elems)
 
     # create any intermediate directories if they don't exist, in an OS independent way            
-    os.makedirs(os.path.dirname(outfile_name), exist_ok=True)
+    os.makedirs(os.path.dirname(embeddings_db_name), exist_ok=True)
 
     prompt_header = None
     prompt_header_file = args.prompt_header
@@ -262,11 +251,6 @@ def main():
     set_diagnostics(args.diagnostics)
 
     transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'en-US', 'en-GB'])
-
-    if transcript_outfile_name:
-        # write the transcript as json to a file
-        with open(transcript_outfile_name, "w") as f:
-            json.dump(transcript, f)
 
     # next we'll break the video into pieces, generate embeddings for each piece, and store those in dictionary
 
@@ -285,7 +269,7 @@ def main():
     # They will ask questions, and we'll find similar utterances in the video and return them.
     # We'll keep going until the user says "stop"
 
-    print ("Hi, I'm a bot. Ask me a question about the video, and I'll try to find the answer for you.")
+    print ("Hi, I'm a bot. Ask me a question about the video, and I'll try to find the answer for you.\n")
 
     chat_utterances = []
 
@@ -325,7 +309,7 @@ def main():
         # for index, utterance in enumerate(top_n_similar_utterances):
         #     print(f"{index + 1}. {utterance['text']}")
 
-        print(f"Here's what I found: {response}")
+        print(f"{response}\n")
 
     print("Ok, bye!")        
     
