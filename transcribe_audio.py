@@ -66,9 +66,13 @@ def parse_transcription(transcription):
   # speaker, start_time, and text
 
   transcript_lines = transcription.splitlines()
+  print (len(transcript_lines))
+  if len(transcript_lines) < 10:
+    print(f"transcript lines: {transcript_lines}")
 
   heading_and_text_line_pairs = []
   for i in range(0, len(transcript_lines), 3):
+      
       heading_and_text_line_pairs.append((transcript_lines[i], transcript_lines[i+1]))
 
   print (heading_and_text_line_pairs)
@@ -147,7 +151,11 @@ def main():
 
       print("Done.")
     except Exception as e:
-      print(f"Error: {e}")
+      import traceback
+
+      full_error = traceback.format_exc()
+
+      print(f"Error: {full_error}")
 
       print(f"Raw result: {json.dumps(result, indent=2)}")
 
