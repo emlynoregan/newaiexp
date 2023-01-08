@@ -152,9 +152,11 @@ def get_embeddings_for_list(input_list):
 def answer_the_question(user_input, top_n_similar_utterances, chat_utterances, prompt_header):
     # Create a string version of the top n similar utterances
 
-    def construct_prompt(num_chat_utterances_to_include):
-        top_n_similar_utterances_str = "\n".join([
-            f"{i + 1}. {top_n_similar_utterance['text']}" for i, top_n_similar_utterance in enumerate(top_n_similar_utterances)
+    def construct_prompt(num_chat_utterances_to_include, num_similar_utterances_to_include):
+        top_k_similar_utterances = top_n_similar_utterances[:num_similar_utterances_to_include]
+
+        top_k_similar_utterances_str = "\n".join([
+            f"{i + 1}. {top_k_similar_utterance['text']}" for i, top_k_similar_utterance in enumerate(top_k_similar_utterances)
         ])
 
         most_recent_chat_utterances = chat_utterances[-1 * num_chat_utterances_to_include:]
@@ -162,7 +164,7 @@ def answer_the_question(user_input, top_n_similar_utterances, chat_utterances, p
         # Create a string version of the most recent chat utterances
 
         most_recent_chat_utterances_str = "\n".join([
-            f"{most_recent_chat_utterance['speaker']}. {most_recent_chat_utterance['text']}" for i, most_recent_chat_utterance in enumerate(most_recent_chat_utterances)
+            f"{most_recent_chat_utterance['speaker']}. {most_recent_chat_utterance['text']}" for most_recent_chat_utterance in most_recent_chat_utterances
         ])
 
         # Create the prompt
@@ -170,7 +172,7 @@ def answer_the_question(user_input, top_n_similar_utterances, chat_utterances, p
         prompt = f"""
 The transcript of a video includes the following sections that might be relevant to the question:
 
-{top_n_similar_utterances_str}
+{top_k_similar_utterances_str}
 
 The user and the AI are having a conversation about the video. Here's the most recent transcript of the conversation:
 
@@ -181,11 +183,13 @@ and include quotes where that's helpful (but not too many):
 {user_input}
 """
         return prompt
-        
+
+    num_similar_utterances_to_include = len(top_n_similar_utterances)        
     num_chat_utterances_to_include = 20
-    prompt = construct_prompt(num_chat_utterances_to_include)
+
+    prompt = construct_prompt(num_chat_utterances_to_include, num_similar_utterances_to_include)
     completion = None
-    while not completion and num_chat_utterances_to_include:
+    while not completion:
         try:
             completion = openai.Completion.create(
                 model="text-davinci-003",
@@ -194,8 +198,11 @@ and include quotes where that's helpful (but not too many):
                 temperature=0.5,
             )
         except:
-            num_chat_utterances_to_include -= 3
-            prompt = construct_prompt(num_chat_utterances_to_include)
+            num_chat_utterances_to_include = max(4, num_chat_utterances_to_include-1)
+            num_similar_utterances_to_include -= 1
+            if num_similar_utterances_to_include <= 0:
+                raise
+            prompt = construct_prompt(num_chat_utterances_to_include, num_similar_utterances_to_include)
 
     return completion.choices[0].text
 
