@@ -6,6 +6,10 @@ def set_diagnostics(value):
     global diagnostics
     diagnostics = value
 
+def get_diagnostics():
+    global diagnostics
+    return diagnostics
+
 def get_chunks_from_transcript(transcript, chunk_length_mins=10.0):
     # this function converts a transcript of a video
     # into an array of chunks

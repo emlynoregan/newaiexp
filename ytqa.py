@@ -2,7 +2,7 @@
 
 import setcreds
 from youtube_transcript_api import YouTubeTranscriptApi
-from utils import set_diagnostics
+from utils import set_diagnostics, get_diagnostics
 import argparse
 import os
 import json
@@ -45,7 +45,8 @@ def create_embeddings_db(transcript):
                 new_text = " ".join([transcript[index + j]["text"] for j in range(i+1)])
 
                 if new_text.strip() == "":
-                    print (f"Skipping utterance {index + i} because it's empty")
+                    if get_diagnostics():
+                        print (f"Skipping utterance {index + i} because it's empty")
                     continue
 
                 new_utterance = {
@@ -53,14 +54,17 @@ def create_embeddings_db(transcript):
                     "duration": sum([transcript[index + j]["duration"] for j in range(i+1)]),
                     "text": new_text
                 }
-                print (f"Creating new utterance: {new_utterance}")
+                if get_diagnostics():
+                    print (f"Creating new utterance: {new_utterance}")
                 # new_utterance["embedding"] = get_embedding(new_text, "text-embedding-ada-002")
                 new_embeddings_unprocessed.append(new_utterance)
 
         if len(new_embeddings_unprocessed) > C_MAX_SIMULTANEOUS_EMBEDDINGS:
-            print(f"Getting embeddings for {len(new_embeddings_unprocessed)} new utterances")
+            if get_diagnostics():
+                print(f"Getting embeddings for {len(new_embeddings_unprocessed)} new utterances")
             embeddings = get_embeddings_for_list([new_utterance["text"] for new_utterance in new_embeddings_unprocessed])
-            print (f"Got {len(embeddings)} new embeddings")
+            if get_diagnostics():
+                print (f"Got {len(embeddings)} new embeddings")
 
             for i, new_utterance in enumerate(new_embeddings_unprocessed):
                 new_utterance["embedding"] = embeddings[i]
@@ -69,9 +73,11 @@ def create_embeddings_db(transcript):
             new_embeddings_unprocessed = []
 
     if len(new_embeddings_unprocessed):
-        print(f"Getting embeddings for {len(new_embeddings_unprocessed)} new utterances")
+        if get_diagnostics():
+            print(f"Getting embeddings for {len(new_embeddings_unprocessed)} new utterances")
         embeddings += get_embeddings_for_list([new_utterance["text"] for new_utterance in new_embeddings_unprocessed])
-        print (f"Got {len(embeddings)} new embeddings")
+        if get_diagnostics():
+            print (f"Got {len(embeddings)} new embeddings")
 
         for i, new_utterance in enumerate(new_embeddings_unprocessed):
             new_utterance["embedding"] = embeddings[i]
@@ -146,21 +152,22 @@ def get_embeddings_for_list(input_list):
 def answer_the_question(user_input, top_n_similar_utterances, chat_utterances, prompt_header):
     # Create a string version of the top n similar utterances
 
-    top_n_similar_utterances_str = "\n".join([
-        f"{i + 1}. {top_n_similar_utterance['text']}" for i, top_n_similar_utterance in enumerate(top_n_similar_utterances)
-    ])
+    def construct_prompt(num_chat_utterances_to_include):
+        top_n_similar_utterances_str = "\n".join([
+            f"{i + 1}. {top_n_similar_utterance['text']}" for i, top_n_similar_utterance in enumerate(top_n_similar_utterances)
+        ])
 
-    most_recent_chat_utterances = chat_utterances[-20:]
+        most_recent_chat_utterances = chat_utterances[-1 * num_chat_utterances_to_include:]
 
-    # Create a string version of the most recent chat utterances
+        # Create a string version of the most recent chat utterances
 
-    most_recent_chat_utterances_str = "\n".join([
-        f"{most_recent_chat_utterance['speaker']}. {most_recent_chat_utterance['text']}" for i, most_recent_chat_utterance in enumerate(most_recent_chat_utterances)
-    ])
+        most_recent_chat_utterances_str = "\n".join([
+            f"{most_recent_chat_utterance['speaker']}. {most_recent_chat_utterance['text']}" for i, most_recent_chat_utterance in enumerate(most_recent_chat_utterances)
+        ])
 
-    # Create the prompt
+        # Create the prompt
 
-    prompt = f"""
+        prompt = f"""
 The transcript of a video includes the following sections that might be relevant to the question:
 
 {top_n_similar_utterances_str}
@@ -173,21 +180,29 @@ The user and the AI are having a conversation about the video. Here's the most r
 and include quotes where that's helpful (but not too many):
 {user_input}
 """
-
-    # Ask OpenAI to answer the question
-    completion = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=prompt,
-        max_tokens=1000,
-        temperature=0.5,
-    )    
+        return prompt
+        
+    num_chat_utterances_to_include = 20
+    prompt = construct_prompt(num_chat_utterances_to_include)
+    completion = None
+    while not completion and num_chat_utterances_to_include:
+        try:
+            completion = openai.Completion.create(
+                model="text-davinci-003",
+                prompt=prompt,
+                max_tokens=1000,
+                temperature=0.5,
+            )
+        except:
+            num_chat_utterances_to_include -= 3
+            prompt = construct_prompt(num_chat_utterances_to_include)
 
     return completion.choices[0].text
 
 def rewrite_user_input_for_semantic_search(chat_utterances):
     # we'll ask openai to rewrite the user input to make it more useful in a semantic search
 
-    most_recent_chat_utterances = chat_utterances[-20:]
+    most_recent_chat_utterances = chat_utterances[-10:]
 
     # Create a string version of the most recent chat utterances
 
@@ -249,6 +264,7 @@ def main():
             prompt_header = f.read()
 
     set_diagnostics(args.diagnostics)
+    
 
     transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'en-US', 'en-GB'])
 
@@ -291,7 +307,7 @@ def main():
         # get a sentence that sums up the user's request in context, and is useful for semantic comparison
         user_input_for_embedding = rewrite_user_input_for_semantic_search(chat_utterances)
 
-        if args.diagnostics:
+        if get_diagnostics():
             print (f"***User input for embedding: {user_input_for_embedding}")
 
         # find the top 5 most similar utterances
