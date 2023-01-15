@@ -2,7 +2,6 @@ openai[embeddings]
 youtube_transcript_api
 requests
 bs4
-matplotlib
-plotly
-scipy
-sklearn
+scrapy
+duckduckgo-search
+readability-lxml
