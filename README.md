@@ -28,3 +28,7 @@ This script summarizes a web page or a text file using openai's text-davinci-003
 
 [More info](README-summarize_web_or_text.md)
 
+## ddgsearch.py
+This script searches duckduckgo, then scrapes each result page for text, and returns a list of results including url, title, and text, and useful_text.
+
+[More info](README-ddgsearch.md)
