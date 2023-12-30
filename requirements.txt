@@ -5,3 +5,4 @@ bs4
 scrapy
 duckduckgo-search
 readability-lxml
+numpy
